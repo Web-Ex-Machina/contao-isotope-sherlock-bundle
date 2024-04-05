@@ -1,0 +1,10 @@
+<?xml version="1.0" ?><xliff version="1.1">
+  <file datatype="php" original="system/modules/isotope/languages/en/tl_iso_payment.php" source-language="en" target-language="en">
+    <body>
+      <trans-unit id="tl_iso_payment.config_sherlock_legend">
+        <source>Sherlock settings</source>
+        <target>Sherlock settings</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

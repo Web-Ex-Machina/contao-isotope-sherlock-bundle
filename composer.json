@@ -1,0 +1,41 @@
+{
+    "name": "webexmachina/contao-isotope-sherlock-bundle",
+    "description": "Isotope Sherlock bundle for Contao Open Source CMS",
+    "type": "contao-bundle",
+    "license": "LGPL-3.0-or-later",
+    "website" : "https://www.webexmachina.fr/",
+    "authors": [
+        {
+            "name": "Web ex Machina",
+            "homepage": "https://www.webexmachina.fr",
+            "role":"Developer"
+        }
+    ],
+    "support":{
+        "issues":"https://github.com/webexmachina/contao-isotope-sherlock-bundle/issues",
+        "source":"https://github.com/webexmachina/contao-isotope-sherlock-bundle"
+    },
+    "require": {
+        "php": "^7.4 || ^8.0",
+        "contao/core-bundle": "^4.9",
+        "isotope/isotope-core": "^2.6",
+        "plenta/contao-encryption": "^2.0"
+    },
+    "autoload":{
+        "psr-4": {
+            "ContaoIsotopeSherlockBundle\\": "src/"
+        },
+        "classmap": [
+            "src/Resources/contao/"
+        ],
+        "exclude-from-classmap": [
+            "src/Resources/contao/config/",
+            "src/Resources/contao/dca/",
+            "src/Resources/contao/languages/",
+            "src/Resources/contao/templates/"
+        ]
+    },
+    "extra":{
+        "contao-manager-plugin": "ContaoIsotopeSherlockBundle\\ContaoManager\\Plugin"
+    }
+}
