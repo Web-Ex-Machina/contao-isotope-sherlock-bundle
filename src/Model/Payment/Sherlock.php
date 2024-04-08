@@ -59,6 +59,15 @@ class Sherlock extends Postsale implements IsotopePostsale
         $objTemplate->member = $this->member;
         $objTemplate->amount = $this->amount;
 
+        $this->wrapper = $this->getWrapper();
+
+        $this->wrapper->set('amount', (int) $this->amount * 100);
+        $this->wrapper->set('normalReturnUrl', null);
+        $this->wrapper->set('keyVersion', 1);
+
+        $this->wrapper->paymentInit();
+
+
         return $objTemplate->parse();
     }
 
