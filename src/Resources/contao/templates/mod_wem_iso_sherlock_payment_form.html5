@@ -1,0 +1,5 @@
+<?php if($this->error): ?>
+	<p class="error"><?= $this->message ?></p>
+<?php else: ?>
+	<a href="<?= $this->url ?>" title="Régler ma commande" class="btn">URL retournée par Sherlock</a> 
+<?php endif; ?>

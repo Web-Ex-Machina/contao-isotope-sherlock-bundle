@@ -66,7 +66,14 @@ class Sherlock extends Postsale implements IsotopePostsale
         $this->wrapper->set('keyVersion', 1);
 
         $this->wrapper->paymentInit();
+        
+        $r = (array) json_decode($this->wrapper->get_message());
+        if ('OK' !== $r['code']) {
+            $objTemplate->error = true;
+            $objTemplate->message = $r['message'];
 
+            return $objTemplate->parse();
+        }
 
         return $objTemplate->parse();
     }

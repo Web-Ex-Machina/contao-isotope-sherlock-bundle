@@ -35,7 +35,7 @@ class Wrapper
 
         // $this->data['keyVersion'] = $this->secret_key;
         $this->data['keyVersion'] = 1;
-        $this->data['seal'] = $this->secret_key;
+        // $this->data['seal'] = $this->secret_key;
         $this->data['merchantId'] = $this->merchant_id;
 
         // Setup mandatory vars
@@ -68,16 +68,19 @@ class Wrapper
     // Doc: https://sherlocks-documentation.secure.lcl.fr/fr/dictionnaire-des-donnees/paypage/paymentwebinit.html
     public function paymentInit()
     {
-    	$this->api_method('paymentInit',[
-            'amount'=>$this->amount,
-            'currencyCode'=>$this->currencyCode,
-            'interfaceVersion'=>$this->interfaceVersion,
-            'keyVersion'=>$this->keyVersion,
-            'normalReturnUrl'=>$this->normalReturnUrl,
-            'orderChannel'=>$this->orderChannel,
-            // 'seal'=>$this->getSeal(),
-            'seal'=>$this->seal,
-        ]);
+        // $this->api_method('paymentInit',[
+        //     'amount'=>$this->amount,
+        //     'currencyCode'=>$this->currencyCode,
+        //     'interfaceVersion'=>$this->interfaceVersion,
+        //     'keyVersion'=>$this->keyVersion,
+        //     'normalReturnUrl'=>$this->normalReturnUrl,
+        //     'orderChannel'=>$this->orderChannel,
+        //     'seal'=>$this->getSeal(),
+        //     'seal'=>$this->seal,
+        // ]);
+        $this->api_method('paymentInit',array_merge($this->data,[
+            'seal'=>$this->getSeal(),
+        ]));
     	
     }
 
@@ -88,7 +91,7 @@ class Wrapper
      */
     protected function getSeal()
     {
-    	return hash_hmac($this->data['hashAlgorithm1'] ?: 'sha256', $this->data, $this->secret_key);
+    	return hash_hmac($this->data['hashAlgorithm1'] ?: 'sha256', implode('',array_values($this->data)), $this->secret_key);
     }
 
 
@@ -110,7 +113,7 @@ class Wrapper
         }
 
         $result = curl_exec($ch);
-
+dump($result);die();
         $this->message = array();
         $this->add_response($result);
         curl_close($ch);
