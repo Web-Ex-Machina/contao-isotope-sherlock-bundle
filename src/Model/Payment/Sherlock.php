@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace ContaoIsotopePaytweakBundle\Model\Payment;
+namespace ContaoIsotopeSherlockBundle\Model\Payment;
 
 use Contao\CoreBundle\Exception\RedirectResponseException;
 use Contao\FrontendTemplate;
 use Contao\Module;
 use Contao\System;
-use ContaoIsotopePaytweakBundle\Sherlock\Wrapper;
+use ContaoIsotopeSherlockBundle\Sherlock\Wrapper;
 use Exception;
 use Haste\Input\Input;
 use Isotope\Interfaces\IsotopePostsale;
@@ -134,6 +134,12 @@ class Sherlock extends Postsale implements IsotopePostsale
         $encryptionService = System::getContainer()->get('plenta.encryption');
 
         
+        return new Wrapper(
+            $encryptionService->decrypt($this->payment->sherlock_merchant_id),
+            $encryptionService->decrypt($this->payment->sherlock_key_secret),
+            [],
+            $this->payment->sherlock_mode
+        );
     }
 
     /**

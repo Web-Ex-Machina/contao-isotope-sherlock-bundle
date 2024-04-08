@@ -1,6 +1,6 @@
 <?php
 
-namespace ContaoIsotopePaytweakBundle\Sherlock;
+namespace ContaoIsotopeSherlockBundle\Sherlock;
 
 class Wrapper
 {
