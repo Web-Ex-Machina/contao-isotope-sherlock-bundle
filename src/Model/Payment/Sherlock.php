@@ -61,19 +61,27 @@ class Sherlock extends Postsale implements IsotopePostsale
 
         $this->wrapper = $this->getWrapper();
 
-        $this->wrapper->set('amount', (int) $this->amount * 100);
-        $this->wrapper->set('normalReturnUrl', null);
-        $this->wrapper->set('keyVersion', 1);
+        $this->wrapper->amount = (int) $this->amount * 100;
+        $this->wrapper->normalReturnUrl = 'https://altradplettacmefran.loc/commande-2/complete.html';
+        $this->wrapper->keyVersion = 1;
+        $this->wrapper->orderId = $this->order->getUniqueId();
+        $this->wrapper->customerEmail = $this->payment->billingAddress->email;
 
         $this->wrapper->paymentInit();
+        $this->wrapper->show_message();
         
         $r = (array) json_decode($this->wrapper->get_message());
-        if ('OK' !== $r['code']) {
+
+        if ('00' !== $r['redirectionStatusCode']) {
             $objTemplate->error = true;
-            $objTemplate->message = $r['message'];
+            $objTemplate->message = $r['redirectionStatusMessage'];
 
             return $objTemplate->parse();
         }
+
+        $objTemplate->redirectionURL = $r['redirectionURL'];
+        $objTemplate->redirectionVersion = $r['redirectionVersion'];
+        $objTemplate->redirectionData = $r['redirectionData'];
 
         return $objTemplate->parse();
     }
@@ -101,6 +109,12 @@ class Sherlock extends Postsale implements IsotopePostsale
     {
         $this->getVars($objOrder, null);
         $this->addLog('CGI 0 : Call du retour CGI');
+        // @todo : still WIP
+        $vars = $this->getPostFromRequest();
+
+        $this->wrapper = $this->getWrapper();
+
+        $this->wrapper->verifyResponseSecurity($vars['Data'],$vars['Encode'],$vars['Seal']);
 
         return false;
     }

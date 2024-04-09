@@ -2,6 +2,8 @@
 
 namespace ContaoIsotopeSherlockBundle\Sherlock;
 
+use Exception;
+
 class Wrapper
 {
 	// Global
@@ -68,20 +70,59 @@ class Wrapper
     // Doc: https://sherlocks-documentation.secure.lcl.fr/fr/dictionnaire-des-donnees/paypage/paymentwebinit.html
     public function paymentInit()
     {
-        // $this->api_method('paymentInit',[
-        //     'amount'=>$this->amount,
-        //     'currencyCode'=>$this->currencyCode,
-        //     'interfaceVersion'=>$this->interfaceVersion,
-        //     'keyVersion'=>$this->keyVersion,
-        //     'normalReturnUrl'=>$this->normalReturnUrl,
-        //     'orderChannel'=>$this->orderChannel,
-        //     'seal'=>$this->getSeal(),
-        //     'seal'=>$this->seal,
-        // ]);
-        $this->api_method('paymentInit',array_merge($this->data,[
-            'seal'=>$this->getSeal(),
-        ]));
-    	
+        if(!$this->amount){
+            throw new Exception('"amount" missing');
+        }
+        if(!$this->currencyCode){
+            throw new Exception('"currencyCode" missing');
+        }
+        if(!$this->interfaceVersion){
+            throw new Exception('"interfaceVersion" missing');
+        }
+        if(!$this->keyVersion){
+            throw new Exception('"keyVersion" missing');
+        }
+        if(!$this->normalReturnUrl){
+            throw new Exception('"normalReturnUrl" missing');
+        }
+        if(!$this->orderChannel){
+            throw new Exception('"orderChannel" missing');
+        }
+
+        $this->api_method('paymentInit',array_merge([
+                'Data'=>$this->formatData($this->data),
+                'InterfaceVersion'=>$this->interfaceVersion,
+            ],[
+                'Seal'=>$this->getSeal($this->formatData($this->data)),
+            ]
+        ));
+    }
+    /**
+     * Check response seal
+     * @see https://sherlocks-documentation.secure.lcl.fr/fr/guide-de-demarrage-rapide.html#Verifier-secu-reponse_
+     * @param  string $data   The response's data
+     * @param  string $encode The way response's data is encoded
+     * @param  string $seal   The response's seal
+     * 
+     * @throws Exception if seals do not match
+     */
+    public function verifyResponseSecurity(string $data, string $encode, string $seal)
+    {
+        if('base64' === $encode){
+            $data = base64_decode($data);
+        }elseif('base64url' === $encode){
+            $data = base64_decode(strtr($data, '-_', '+/'));
+        }
+
+        $calculatedSeal = $this->getSeal($data);
+
+        if($calculatedSeal !== $seal){
+            throw new Exception('Seals do not match');
+        }
+    }
+
+    protected function formatData(array $data){
+        return http_build_query($data,'','|');
     }
 
     /**
@@ -89,9 +130,9 @@ class Wrapper
      * 
      * Accepted : SHA-1, SHA-256, SHA-512
      */
-    protected function getSeal()
+    protected function getSeal(string $data)
     {
-    	return hash_hmac($this->data['hashAlgorithm1'] ?: 'sha256', implode('',array_values($this->data)), $this->secret_key);
+    	return hash_hmac($this->data['hashAlgorithm1'] ?: 'sha256', $data, $this->secret_key);
     }
 
 
@@ -108,12 +149,12 @@ class Wrapper
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $type);
 
         if ('POST' === $type) {
-        	$query = http_build_query($args,'','|');
+        	$query = http_build_query($args);
         	curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
         }
 
         $result = curl_exec($ch);
-dump($result);die();
+        
         $this->message = array();
         $this->add_response($result);
         curl_close($ch);
