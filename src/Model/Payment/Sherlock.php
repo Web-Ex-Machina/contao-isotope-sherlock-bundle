@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace ContaoIsotopeSherlockBundle\Model\Payment;
 
 use Contao\CoreBundle\Exception\RedirectResponseException;
+use Contao\Environment;
 use Contao\FrontendTemplate;
+use Contao\Input as ContaoInput;
 use Contao\Module;
 use Contao\System;
 use ContaoIsotopeSherlockBundle\Sherlock\Wrapper;
@@ -18,6 +20,7 @@ use Isotope\Model\Payment;
 use Isotope\Model\Payment\Postsale;
 use Isotope\Model\ProductCollection\Order;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * TODO:
@@ -62,41 +65,69 @@ class Sherlock extends Postsale implements IsotopePostsale
         $this->wrapper = $this->getWrapper();
 
         $this->wrapper->amount = (int) $this->amount * 100;
-        $this->wrapper->normalReturnUrl = 'https://altradplettacmefran.loc/commande-2/complete.html';
+        $this->wrapper->normalReturnUrl = Environment::get('url').'/_isotope/postsale/pay/'.$this->order->payment_id;
+        // $this->wrapper->normalReturnUrl = 'https://altradplettacmefran.loc/_isotope/postsale/pay/'.$this->order->payment_id;
         $this->wrapper->keyVersion = 1;
         $this->wrapper->orderId = $this->order->getUniqueId();
         $this->wrapper->customerEmail = $this->payment->billingAddress->email;
+        $this->wrapper->transactionReference = $this->order->id.'A'.time();
 
         $this->wrapper->paymentInit();
-        $this->wrapper->show_message();
         
         $r = (array) json_decode($this->wrapper->get_message());
+        die($r[0]);
+        // if(JSON_ERROR_NONE !== json_last_error() || empty($r)){
+            
+        //     $objTemplate->error = true;
+        //     $objTemplate->message = "wesh";
 
-        if ('00' !== $r['redirectionStatusCode']) {
-            $objTemplate->error = true;
-            $objTemplate->message = $r['redirectionStatusMessage'];
+        //     return $objTemplate->parse();
+        // }
 
-            return $objTemplate->parse();
-        }
+        // if ('00' !== $r['redirectionStatusCode']) {
+        //     $objTemplate->error = true;
+        //     $objTemplate->message = $r['redirectionStatusMessage'];
 
-        $objTemplate->redirectionURL = $r['redirectionURL'];
-        $objTemplate->redirectionVersion = $r['redirectionVersion'];
-        $objTemplate->redirectionData = $r['redirectionData'];
+        //     return $objTemplate->parse();
+        // }
+
+        // $objTemplate->redirectionURL = $r['redirectionURL'];
+        // $objTemplate->redirectionVersion = $r['redirectionVersion'];
+        // $objTemplate->redirectionData = $r['redirectionData'];
 
         return $objTemplate->parse();
     }
 
     public function getPostsaleOrder()
     {
-        $orderId = $this->getOrderIdFromRequest();
+        $vars = $this->getPostFromRequest();
+
+        $this->wrapper = $this->getWrapper();
+
+        $blnError = false;
+
+        try{
+            $this->wrapper->verifyResponseSecurity($vars['Data'],$vars['Encode'],$vars['Seal']);
+        }catch(Exception $e){
+            $blnError = true;
+            // $this->addLog(sprintf('CGI 0 : CGI callback for order %s', $orderId));
+        }
+
+        $responseData = $this->wrapper->getResponseDataAsArray($vars['Data'],$vars['Encode']);
+
+        $orderId = $responseData['orderId'];
 
         $this->addLog(sprintf('CGI 0 : CGI callback for order %s', $orderId));
 
+        if($blnError){
+            $this->addLog(sprintf('CGI 0 : Error for order %s - seals dot not match !', $orderId));
+        }
+        
         if (null === $orderId) {
             return null;
         }
 
-        return Order::findByPk($orderId);
+        return Order::findOneBy('uniqid',$orderId);
     }
 
     /**
@@ -107,16 +138,41 @@ class Sherlock extends Postsale implements IsotopePostsale
      */
     public function processPostsale(IsotopeProductCollection $objOrder)
     {
-        $this->getVars($objOrder, null);
-        $this->addLog('CGI 0 : Call du retour CGI');
-        // @todo : still WIP
-        $vars = $this->getPostFromRequest();
+        try{
+            $this->getVars($objOrder, null);
+            $this->addLog('CGI 0 : Call du retour CGI');
 
-        $this->wrapper = $this->getWrapper();
+            $vars = $this->getPostFromRequest();
+            $this->wrapper = $this->getWrapper();
+            $this->wrapper->verifyResponseSecurity($vars['Data'],$vars['Encode'],$vars['Seal']);
 
-        $this->wrapper->verifyResponseSecurity($vars['Data'],$vars['Encode'],$vars['Seal']);
+            $responseData = $this->wrapper->getResponseDataAsArray($vars['Data'],$vars['Encode']);
 
-        return false;
+            if('00' === $responseData['responseCode']){
+                $this->addLog('CGI 1: Payment OK with transaction_id - ' . $responseData['transactionReference']);
+
+                if ($this->order->checkout()) {
+                    $this->order->setDatePaid(time());
+                    $this->order->updateOrderStatus($this->new_order_status);
+                    $this->addLog('CGI 2: Order marked as checked out with new status: ' . $this->new_order_status);
+                } else {
+                    throw new Exception('Something went wrong when checking out order with valid payment');
+                }
+            }else{
+                $this->addLog('CGI 1: Payment KO with status - ' . $responseData['responseCode'] . ' and reason - ' . $responseData['redirectionStatusMessage']);
+                if (null === $this->order->getConfig()) {
+                    throw new Exception('Config for Order ID ' . $this->order->getId() . ' not found');
+                } elseif ($this->order->checkout()) {
+                    $this->order->updateOrderStatus($this->order->getConfig()->orderstatus_error);
+                    $this->addLog('CGI 2 : Order marked as checked out with new status: ' . $this->order->getConfig()->orderstatus_error);
+                } else {
+                    throw new Exception('Something went wrong when checking out order with invalid payment');
+                }
+            }
+
+        }catch(Exception $e) {
+            $this->addLog('CGI error: ' . $e->getMessage());
+        }
     }
     
     protected function getReference()
@@ -141,9 +197,10 @@ class Sherlock extends Postsale implements IsotopePostsale
 
     protected function getOrderIdFromRequest()
     {
-        $parameters = $this->getPostFromRequest();
+        return str_replace('REF', '', ContaoInput::get('reference'));
+        // $parameters = $this->getPostFromRequest();
 
-        return str_replace('REF', '', $parameters['reference']);
+        // return str_replace('REF', '', $parameters['reference']);
     }
 
     protected function getVars(IsotopeProductCollection $objOrder, Module $objModule = null)
@@ -163,12 +220,11 @@ class Sherlock extends Postsale implements IsotopePostsale
         // Retrieve Encyption service
         $encryptionService = System::getContainer()->get('plenta.encryption');
 
-        
         return new Wrapper(
-            $encryptionService->decrypt($this->payment->sherlock_merchant_id),
-            $encryptionService->decrypt($this->payment->sherlock_key_secret),
+            $encryptionService->decrypt($this->payment->sherlock_merchant_id ?: $this->sherlock_merchant_id),
+            $encryptionService->decrypt($this->payment->sherlock_key_secret ?: $this->sherlock_key_secret),
             [],
-            $this->payment->sherlock_mode
+            $this->payment->sherlock_mode?: $this->sherlock_mode
         );
     }
 

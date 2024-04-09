@@ -10,6 +10,7 @@ class Wrapper
     protected $merchant_id = null;
 	protected $secret_key = null;
 	protected $mode = null;
+    protected $interfaceVersion = null;
 
 	// Urls
 	protected $api = null;
@@ -28,9 +29,9 @@ class Wrapper
 
 	public function __construct($merchant_id = '', $secret_key = '', $data = [], $mode = 'DEV')
     {
-        $this->merchant_id = $merchant_id;
-        $this->secret_key = $secret_key;
         $this->mode = $mode;
+        $this->merchant_id = 'DEV' === $this->mode ? '002016000000001' : $merchant_id;
+        $this->secret_key = 'DEV' === $this->mode ? '002016000000001_KEY1' : $secret_key;
         $this->api = 'DEV' === $this->mode ? $this->api_dev : $this->api_prod;
         $this->data = $data;
         $this->message = array();
@@ -41,9 +42,10 @@ class Wrapper
         $this->data['merchantId'] = $this->merchant_id;
 
         // Setup mandatory vars
-        if (!array_key_exists('interfaceVersion', $this->data)) {
-        	$this->data['interfaceVersion'] = 'HP_3.4';
-        }
+        // if (!array_key_exists('interfaceVersion', $this->data)) {
+        	// $this->data['interfaceVersion'] = 'HP_3.4'; // REQUEST INVALID IF PRESENT IN DATA FIELD (EVEN IF MANDATORY ACCORDING TO DOCS)
+            $this->interfaceVersion = 'HP_3.4';        
+        // }
 
         if (!array_key_exists('currencyCode', $this->data)) {
         	$this->data['currencyCode'] = '978';
@@ -76,9 +78,9 @@ class Wrapper
         if(!$this->currencyCode){
             throw new Exception('"currencyCode" missing');
         }
-        if(!$this->interfaceVersion){
-            throw new Exception('"interfaceVersion" missing');
-        }
+        // if(!$this->interfaceVersion){
+        //     throw new Exception('"interfaceVersion" missing');
+        // }
         if(!$this->keyVersion){
             throw new Exception('"keyVersion" missing');
         }
@@ -89,13 +91,14 @@ class Wrapper
             throw new Exception('"orderChannel" missing');
         }
 
-        $this->api_method('paymentInit',array_merge([
+        $this->api_method('paymentInit',[
                 'Data'=>$this->formatData($this->data),
                 'InterfaceVersion'=>$this->interfaceVersion,
-            ],[
                 'Seal'=>$this->getSeal($this->formatData($this->data)),
+                'Encode'=>'base64',
+                'sealAlgorithm'=>'HMAC-SHA-256'
             ]
-        ));
+        );
     }
     /**
      * Check response seal
@@ -106,7 +109,28 @@ class Wrapper
      * 
      * @throws Exception if seals do not match
      */
-    public function verifyResponseSecurity(string $data, string $encode, string $seal)
+    public function verifyResponseSecurity(string $undecodedData, string $encode, string $seal)
+    {
+        $calculatedSeal = $this->getSeal($undecodedData);
+
+        if(!hash_equals($calculatedSeal,$seal)){
+            throw new Exception('Seals do not match');
+        }
+    }
+
+    public function getResponseDataAsArray(string $data, string $encode)
+    {
+        $data = $this->decodeResponseData($data, $encode);
+        $arr = [];
+        foreach (explode('|', $data) as $item){
+            $parts = explode('=', $item);
+            $arr[trim($parts[0])] = $parts[1];
+        }
+
+        return $arr;
+    }
+
+    protected function decodeResponseData(string $data, string $encode)
     {
         if('base64' === $encode){
             $data = base64_decode($data);
@@ -114,15 +138,17 @@ class Wrapper
             $data = base64_decode(strtr($data, '-_', '+/'));
         }
 
-        $calculatedSeal = $this->getSeal($data);
-
-        if($calculatedSeal !== $seal){
-            throw new Exception('Seals do not match');
-        }
+        return $data;
     }
 
     protected function formatData(array $data){
-        return http_build_query($data,'','|');
+        // return http_build_query($data,'','|');
+        $str = '';
+        foreach($data as $key => $value){
+            $str.='|'.$key.'='.$value;
+        }
+
+        return base64_encode(mb_convert_encoding(substr($str,1),'UTF-8'));
     }
 
     /**
@@ -132,7 +158,17 @@ class Wrapper
      */
     protected function getSeal(string $data)
     {
-    	return hash_hmac($this->data['hashAlgorithm1'] ?: 'sha256', $data, $this->secret_key);
+        // TEST SEAL CALCULATION FAILING ON VALUES GIVEN BY DOCS
+        // BUT WORKS WITH "real" VALUES ... DKDCWD
+        // $dataTest = mb_convert_encoding('automaticResponseURL=https://automatic-response-url.fr/|normalReturnURL=https://normal-return-url/|captureDay=0|captureMode=AUTHOR_CAPTURE|merchantId=011223344550000|amount=2500|orderId=ORD101|currencyCode=978|transactionReference=TREFEXA2012|keyVersion=1|transactionOrigin=SO_WEBAPPLI|returnContext=ReturnContext|orderChannel=INTERNET|customerContact.email=customer@email.com','UTF-8');
+        // $secretKeyTest = mb_convert_encoding('secret123','UTF-8');
+        // $sealTest = 'ac2332b57a674aba5b28a03dae677fa2f4c1ae8a349ebbdd6772a098c7f29861';
+
+        // dump('Seal test : '.$sealTest);
+        
+        // dump('Seal calc : '.hash_hmac('sha256', $dataTest, $secretKeyTest));
+
+    	return hash_hmac($this->data['sealAlgorithm'] ?: 'sha256', $data, mb_convert_encoding($this->secret_key,'UTF-8'));
     }
 
 
@@ -154,17 +190,25 @@ class Wrapper
         }
 
         $result = curl_exec($ch);
-        
+        // dump($args);
+        // dump($query);
+        dump($result);
         $this->message = array();
         $this->add_response($result);
         curl_close($ch);
+        // exit();
     }
 
     /* ----- RESPONSES & MESSAGING ------ */
 
     private function add_response($resp)
     {
-        $this->message = json_decode($resp);
+        $str = json_decode($resp);
+        if(JSON_ERROR_NONE === json_last_error()){
+            $this->message = $str;
+        }else{
+            $this->message = $resp;
+        }
     }
 
     private function add_message($arg1, $arg2)

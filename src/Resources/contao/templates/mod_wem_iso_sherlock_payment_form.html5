@@ -5,8 +5,11 @@
 	<form method="post" action="<?= $this->redirectionURL; ?>" name="sherlock_payment_form">
     	<input type="hidden" name="redirectionVersion" value="<?= $this->redirectionVersion; ?>">
     	<input type="hidden" name="redirectionData" value="<?= $this->redirectionData; ?>">
+    	<button type="submit">
+    		URL retournée par Sherlock
+    	</button>
   	</form>
   	<script type="text/javascript">
-  		document.querySelector('form[name="sherlock_payment_form"]').submit();
+  		// document.querySelector('form[name="sherlock_payment_form"]').submit();
   	</script>
 <?php endif; ?>
