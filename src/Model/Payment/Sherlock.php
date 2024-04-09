@@ -66,11 +66,11 @@ class Sherlock extends Postsale implements IsotopePostsale
 
         $this->wrapper->amount = (int) $this->amount * 100;
         $this->wrapper->normalReturnUrl = Environment::get('url').'/_isotope/postsale/pay/'.$this->order->payment_id;
-        // $this->wrapper->normalReturnUrl = 'https://altradplettacmefran.loc/_isotope/postsale/pay/'.$this->order->payment_id;
+        $this->wrapper->automaticResponseUrl = Environment::get('url').'/_isotope/postsale/pay/'.$this->order->payment_id;
         $this->wrapper->keyVersion = 1;
         $this->wrapper->orderId = $this->order->getUniqueId();
         $this->wrapper->customerEmail = $this->payment->billingAddress->email;
-        $this->wrapper->transactionReference = $this->order->id.'A'.time();
+        $this->wrapper->transactionReference = $this->order->id.'A'; // 1 order = 1 transaction
 
         $this->wrapper->paymentInit();
         
@@ -147,6 +147,11 @@ class Sherlock extends Postsale implements IsotopePostsale
             $this->wrapper->verifyResponseSecurity($vars['Data'],$vars['Encode'],$vars['Seal']);
 
             $responseData = $this->wrapper->getResponseDataAsArray($vars['Data'],$vars['Encode']);
+
+            if($this->order->isCheckoutComplete()){
+                $this->addLog('CGI 1: order ' . $this->order->getId() . ' already complete - transaction_id - ' . $responseData['transactionReference']);
+                return;
+            }
 
             if('00' === $responseData['responseCode']){
                 $this->addLog('CGI 1: Payment OK with transaction_id - ' . $responseData['transactionReference']);
