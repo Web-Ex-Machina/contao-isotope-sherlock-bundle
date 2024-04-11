@@ -1,0 +1,14 @@
+services:
+  # We must do it this way if we want to be able to use dependency injections.
+  # File your complaints to Symfony
+  ContaoIsotopeSherlockBundle\Controller\SherlockPostsaleController:
+      alias: 'contao_isotope_sherlock.controller.sherlock_postsale_controller'
+      public: true
+      
+  contao_isotope_sherlock.controller.sherlock_postsale_controller:
+    class: ContaoIsotopeSherlockBundle\Controller\SherlockPostsaleController
+    arguments:
+      $framework: '@contao.framework'
+      $uriSigner: '@uri_signer'
+      $logger: '@monolog.logger.contao'
+    public: true

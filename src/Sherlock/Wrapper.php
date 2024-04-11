@@ -36,9 +36,7 @@ class Wrapper
         $this->data = $data;
         $this->message = array();
 
-        // $this->data['keyVersion'] = $this->secret_key;
         $this->data['keyVersion'] = 1;
-        // $this->data['seal'] = $this->secret_key;
         $this->data['merchantId'] = $this->merchant_id;
 
         // Setup mandatory vars
@@ -97,7 +95,7 @@ class Wrapper
                 'Seal'=>$this->getSeal($this->formatData($this->data)),
                 'Encode'=>'base64',
                 'sealAlgorithm'=>'HMAC-SHA-256'
-            ]
+            ],'POST'
         );
     }
     /**
@@ -158,16 +156,6 @@ class Wrapper
      */
     protected function getSeal(string $data)
     {
-        // TEST SEAL CALCULATION FAILING ON VALUES GIVEN BY DOCS
-        // BUT WORKS WITH "real" VALUES ... DKDCWD
-        // $dataTest = mb_convert_encoding('automaticResponseURL=https://automatic-response-url.fr/|normalReturnURL=https://normal-return-url/|captureDay=0|captureMode=AUTHOR_CAPTURE|merchantId=011223344550000|amount=2500|orderId=ORD101|currencyCode=978|transactionReference=TREFEXA2012|keyVersion=1|transactionOrigin=SO_WEBAPPLI|returnContext=ReturnContext|orderChannel=INTERNET|customerContact.email=customer@email.com','UTF-8');
-        // $secretKeyTest = mb_convert_encoding('secret123','UTF-8');
-        // $sealTest = 'ac2332b57a674aba5b28a03dae677fa2f4c1ae8a349ebbdd6772a098c7f29861';
-
-        // dump('Seal test : '.$sealTest);
-        
-        // dump('Seal calc : '.hash_hmac('sha256', $dataTest, $secretKeyTest));
-
     	return hash_hmac($this->data['sealAlgorithm'] ?: 'sha256', $data, mb_convert_encoding($this->secret_key,'UTF-8'));
     }
 
@@ -190,13 +178,10 @@ class Wrapper
         }
 
         $result = curl_exec($ch);
-        // dump($args);
-        // dump($query);
-        dump($result);
+
         $this->message = array();
         $this->add_response($result);
         curl_close($ch);
-        // exit();
     }
 
     /* ----- RESPONSES & MESSAGING ------ */

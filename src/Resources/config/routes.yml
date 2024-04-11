@@ -1,0 +1,5 @@
+# Must be loaded in ContaoManager\Plugin.php the Contao 4.4 way
+# The Contao 4.9+ way does not work :/
+contao_isotope_sherlock.controller:
+    resource: '@ContaoIsotopeSherlockBundle/Controller'
+    type: annotation

@@ -9,6 +9,8 @@ use Contao\Environment;
 use Contao\FrontendTemplate;
 use Contao\Input as ContaoInput;
 use Contao\Module;
+use Contao\PageModel;
+use Contao\RequestToken;
 use Contao\System;
 use ContaoIsotopeSherlockBundle\Sherlock\Wrapper;
 use Exception;
@@ -21,7 +23,8 @@ use Isotope\Model\Payment\Postsale;
 use Isotope\Model\ProductCollection\Order;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Isotope\Module\Checkout;
 /**
  * TODO:
  *
@@ -65,37 +68,81 @@ class Sherlock extends Postsale implements IsotopePostsale
         $this->wrapper = $this->getWrapper();
 
         $this->wrapper->amount = (int) $this->amount * 100;
-        $this->wrapper->normalReturnUrl = Environment::get('url').'/_isotope/postsale/pay/'.$this->order->payment_id;
-        $this->wrapper->automaticResponseUrl = Environment::get('url').'/_isotope/postsale/pay/'.$this->order->payment_id;
+
+        $this->wrapper->normalReturnUrl = System::getContainer()->get('router')->generate('sherlock_isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
+        $this->wrapper->automaticResponseUrl = System::getContainer()->get('router')->generate('isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
         $this->wrapper->keyVersion = 1;
         $this->wrapper->orderId = $this->order->getUniqueId();
         $this->wrapper->customerEmail = $this->payment->billingAddress->email;
-        $this->wrapper->transactionReference = $this->order->id.'A'; // 1 order = 1 transaction
+        $this->wrapper->transactionReference = $this->order->id.'TS'.time();
 
         $this->wrapper->paymentInit();
         
-        $r = (array) json_decode($this->wrapper->get_message());
-        die($r[0]);
-        // if(JSON_ERROR_NONE !== json_last_error() || empty($r)){
-            
-        //     $objTemplate->error = true;
-        //     $objTemplate->message = "wesh";
+        $htmlPageReturnedByAPI = json_decode($this->wrapper->get_message());
 
-        //     return $objTemplate->parse();
-        // }
-
-        // if ('00' !== $r['redirectionStatusCode']) {
-        //     $objTemplate->error = true;
-        //     $objTemplate->message = $r['redirectionStatusMessage'];
-
-        //     return $objTemplate->parse();
-        // }
-
-        // $objTemplate->redirectionURL = $r['redirectionURL'];
-        // $objTemplate->redirectionVersion = $r['redirectionVersion'];
-        // $objTemplate->redirectionData = $r['redirectionData'];
+        die($htmlPageReturnedByAPI); // Yup, API returns an HTML page to redirect us to their payment interface
 
         return $objTemplate->parse();
+    }
+
+    public function checkPaymentReturn(IsotopeProductCollection $objOrder)
+    {
+        $vars = $this->getPostFromRequest();
+
+        $this->wrapper = $this->getWrapper();
+
+        $objTemplate = new FrontendTemplate('wem_iso_sherlock_postsale_result');
+        $objTemplate->message = $GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['paymentOk'];
+        $objTemplate->backHref = Environment::get('url');
+
+        try{
+            if(!array_key_exists('Data',$vars)
+            // Encode is not a mandatory key
+            || !array_key_exists('Seal',$vars)
+            ){
+                throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['noDataFromPaymentFound']);
+            }
+
+            try{
+                $this->wrapper->verifyResponseSecurity($vars['Data'],$vars['Encode'],$vars['Seal']);
+            }catch(Exception $e){
+                throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['paymentSealNotCorrect']);
+            }
+
+            $responseData = $this->wrapper->getResponseDataAsArray($vars['Data'],$vars['Encode']);
+
+            if(!$this->isPaymentOk($responseData)){
+                switch($responseData['responseCode']){
+                    case "05":
+                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error05']);
+                    break;
+                    case "34":
+                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error34']);
+                    break;
+                    case "75":
+                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error75']);
+                    break;
+                    case "90":
+                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error90']);
+                    break;
+                    case "99":
+                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error99']);
+                    break;
+                    case "97":
+                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error97']);
+                    break;
+                    default:
+                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['errorGeneric']);
+                }
+            }
+        }catch(Exception $e){
+            $objTemplate->error = true;
+            $objTemplate->message = $GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['anErrorOccured'];
+            $objTemplate->details = sprintf($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['errorDetails'],$e->getMessage());
+        }
+
+
+        return new Response($objTemplate->parse());
     }
 
     public function getPostsaleOrder()
@@ -153,7 +200,7 @@ class Sherlock extends Postsale implements IsotopePostsale
                 return;
             }
 
-            if('00' === $responseData['responseCode']){
+            if($this->isPaymentOk($responseData)){
                 $this->addLog('CGI 1: Payment OK with transaction_id - ' . $responseData['transactionReference']);
 
                 if ($this->order->checkout()) {
@@ -178,6 +225,11 @@ class Sherlock extends Postsale implements IsotopePostsale
         }catch(Exception $e) {
             $this->addLog('CGI error: ' . $e->getMessage());
         }
+    }
+
+    public static function isPaymentOk(array $responseData): bool
+    {
+        return '00' === $responseData['responseCode'];
     }
     
     protected function getReference()

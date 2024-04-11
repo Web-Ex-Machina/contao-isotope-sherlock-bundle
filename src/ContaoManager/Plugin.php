@@ -8,6 +8,9 @@ use Contao\CoreBundle\ContaoCoreBundle;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
+use Contao\ManagerPlugin\Routing\RoutingPluginInterface;
+use Symfony\Component\Config\Loader\LoaderResolverInterface;
+use Symfony\Component\HttpKernel\KernelInterface;
 use ContaoIsotopeSherlockBundle\ContaoIsotopeSherlockBundle;
 
 /**
@@ -15,7 +18,7 @@ use ContaoIsotopeSherlockBundle\ContaoIsotopeSherlockBundle;
  *
  * @author Web ex Machina <https://www.webexmachina.fr>
  */
-class Plugin implements BundlePluginInterface
+class Plugin implements BundlePluginInterface, RoutingPluginInterface
 {
     /**
      * {@inheritdoc}
@@ -30,5 +33,16 @@ class Plugin implements BundlePluginInterface
                 ])
                 ->setReplace(['isotope-sherlock']),
         ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel)
+    {
+        return $resolver
+            ->resolve(__DIR__.'/../Resources/config/routes.yml')
+            ->load(__DIR__.'/../Resources/config/routes.yml')
+        ;
     }
 }

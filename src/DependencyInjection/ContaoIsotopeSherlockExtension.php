@@ -27,5 +27,6 @@ class ContaoIsotopeSherlockExtension extends Extension
         );
 
         $loader->load('services.yml');
+        $loader->load('controllers.yml');
     }
 }

@@ -1,0 +1,16 @@
+<html>
+<head>
+	<title><?= $this->trans('WEM.isotopeSherlock.paymentResult.pageTitle',[],'contao_default'); ?></title>
+</head>
+<body>
+	<?= $this->message; ?>
+
+	<?php if($this->error): ?>
+		<p class="error"><?= $this->details ?></p>
+	<?php endif; ?>
+
+	<a href="<?= $this->backHref; ?>">
+		<?= $this->trans('WEM.isotopeSherlock.paymentResult.backButtonText',[],'contao_default'); ?>
+	</a>
+</body>
+</html>

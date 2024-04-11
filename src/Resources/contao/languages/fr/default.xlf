@@ -1,7 +1,64 @@
 <?xml version="1.0" ?><xliff version="1.1">
   <file datatype="php" original="system/modules/isotope/languages/en/default.php" source-language="en" target-language="fr">
     <body>
-      
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.paymentOk">
+        <source>Payment done !</source>
+        <target>Paiement effectué</target>
+      </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.anErrorOccured">
+        <source>An error occured</source>
+        <target>Une erreur est survenue</target>
+      </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.noDataFromPaymentFound">
+        <source>No data from payment found</source>
+        <target>Aucune donnée de paiement trouvée</target>
+      </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.paymentSealNotCorrect">
+        <source>Data from payment service can't be verified</source>
+        <target>Les données de paiement ne peuvent être vérifiées</target>
+      </trans-unit>
+
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.pageTitle">
+        <source>Payment result</source>
+        <target>Résultat du paiement</target>
+      </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.errorDetails">
+        <source>Error details : %s</source>
+        <target>Détails de l'erreur : %s</target>
+      </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.error05">
+        <source>Payment refused</source>
+        <target>Paiement refusé</target>
+      </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.error34">
+        <source>Payment refused</source>
+        <target>Paiement refusé</target>
+      </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.error75">
+        <source>Maximum payement attempts reached</source>
+        <target>Nombre de tentatives maximal de paiment atteinte</target>
+      </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.error90">
+        <source>Payment refused because of a technical error</source>
+        <target>Une erreur technique est survenue</target>
+      </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.error99">
+        <source>Payment refused because of a technical error</source>
+        <target>Une erreur technique est survenue</target>
+      </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.error97">
+        <source>Payment abandonned</source>
+        <target>Paiement abandonné</target>
+      </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.errorGeneric">
+        <source>Payment refused</source>
+        <target>Paiement refusé</target>
+      </trans-unit>
+
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.backButtonText">
+        <source>Go back to merchant website</source>
+        <target>Retourner au site marchand</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>
