@@ -3,8 +3,9 @@
 	<title><?= $this->trans('WEM.isotopeSherlock.paymentResult.pageTitle',[],'contao_default'); ?></title>
 </head>
 <body>
-	<?= $this->message; ?>
-
+	<p>
+		<?= $this->message; ?>
+	</p>
 	<?php if($this->error): ?>
 		<p class="error"><?= $this->details ?></p>
 	<?php endif; ?>

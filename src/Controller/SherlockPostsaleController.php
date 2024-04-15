@@ -23,7 +23,7 @@ use Symfony\Component\HttpKernel\UriSigner;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route(name="sherlock_isotope_postsale", path="/_sherlock/postsale/{id}", requirements={"id" = "\d+"}, defaults={"_scope" = "frontend", "_token_check" = false, "_bypass_maintenance" = true})
+ * @Route(name="sherlock_isotope_postsale", path="/_sherlock/postsale/{mod}/{id}", requirements={"mod" = "pay|ship" ,"id" = "\d+"}, defaults={"_scope" = "frontend", "_token_check" = false, "_bypass_maintenance" = true})
  */
 class SherlockPostsaleController
 {

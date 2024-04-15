@@ -69,7 +69,9 @@ class Sherlock extends Postsale implements IsotopePostsale
 
         $this->wrapper->amount = (int) $this->amount * 100;
 
-        $this->wrapper->normalReturnUrl = System::getContainer()->get('router')->generate('sherlock_isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
+        $this->wrapper->normalReturnUrl = System::getContainer()->get('router')->generate('sherlock_isotope_postsale', ['mod' => 'pay', 'id' => $this->id,
+            // 'redirectTo'=>$objModule->orderCompleteJumpTo
+        ], UrlGeneratorInterface::ABSOLUTE_URL);
         $this->wrapper->automaticResponseUrl = System::getContainer()->get('router')->generate('isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
         $this->wrapper->keyVersion = 1;
         $this->wrapper->orderId = $this->order->getUniqueId();
@@ -93,7 +95,7 @@ class Sherlock extends Postsale implements IsotopePostsale
 
         $objTemplate = new FrontendTemplate('wem_iso_sherlock_postsale_result');
         $objTemplate->message = $GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['paymentOk'];
-        $objTemplate->backHref = Environment::get('url');
+        $objTemplate->backHref = Environment::get('url'); // module checkout "order complete" page
 
         try{
             if(!array_key_exists('Data',$vars)
@@ -133,6 +135,10 @@ class Sherlock extends Postsale implements IsotopePostsale
                     break;
                     default:
                         throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['errorGeneric']);
+                }
+            }else{
+                if($objOrder->orderdetails_page){
+                   $objTemplate->backHref = PageModel::findByPk($objOrder->orderdetails_page)->getAbsoluteUrl().'?uid=' . $objOrder->uniqid;
                 }
             }
         }catch(Exception $e){
