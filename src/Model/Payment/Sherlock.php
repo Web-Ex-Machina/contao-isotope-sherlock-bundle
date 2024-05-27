@@ -25,6 +25,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Isotope\Module\Checkout;
+use ContaoIsotopeSherlockBundle\Exception\PaymentException;
 /**
  * TODO:
  *
@@ -89,6 +90,8 @@ class Sherlock extends Postsale implements IsotopePostsale
 
     public function checkPaymentReturn(IsotopeProductCollection $objOrder)
     {
+        $this->addLog('CGI 1: order ' . $objOrder->getId());
+
         $vars = $this->getPostFromRequest();
 
         $this->wrapper = $this->getWrapper();
@@ -116,35 +119,69 @@ class Sherlock extends Postsale implements IsotopePostsale
             if(!$this->isPaymentOk($responseData)){
                 switch($responseData['responseCode']){
                     case "05":
-                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error05']);
+                        throw new PaymentException($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error05']);
+                    break;
+                    case "17":
+                        throw new PaymentException($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error17']);
                     break;
                     case "34":
-                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error34']);
+                        throw new PaymentException($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error34']);
                     break;
                     case "75":
-                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error75']);
+                        throw new PaymentException($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error75']);
                     break;
                     case "90":
-                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error90']);
+                        throw new PaymentException($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error90']);
                     break;
                     case "99":
-                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error99']);
+                        throw new PaymentException($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error99']);
                     break;
                     case "97":
-                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error97']);
+                        throw new PaymentException($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['error97']);
                     break;
                     default:
-                        throw new Exception($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['errorGeneric']);
+                        throw new PaymentException($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['errorGeneric']);
                 }
             }else{
                 if($objOrder->orderdetails_page){
                    $objTemplate->backHref = PageModel::findByPk($objOrder->orderdetails_page)->getAbsoluteUrl().'?uid=' . $objOrder->uniqid;
                 }
+                if(!$objOrder->isCheckoutComplete()){
+                    if ($objOrder->checkout()) {
+                        $objOrder->setDatePaid(time());
+                        $objOrder->updateOrderStatus($this->new_order_status);
+                        $this->addLog('CGI 2: Order marked as checked out with new status: ' . $this->new_order_status);
+                    } else {
+                        throw new Exception('Something went wrong when checking out order with valid payment');
+                    }
+                }
             }
+        }catch(PaymentException $e){
+            if(!$objOrder->isCheckoutComplete()){
+                $this->addLog('CGI 2: Payment KO with status - ' . $responseData['responseCode'] . ' and reason - ' . $responseData['redirectionStatusMessage']);
+                if (null === $objOrder->getConfig()) {
+                    throw new Exception('Config for Order ID ' . $objOrder->getId() . ' not found');
+                } else{
+                    $objOrder->updateOrderStatus($objOrder->getConfig()->orderstatus_error);
+                    if ($objOrder->checkout()) {
+                        $this->addLog('CGI 3 : Order marked as checked out with new status: ' . $objOrder->getConfig()->orderstatus_error);
+                    } else {
+                        throw new Exception('Something went wrong when checking out order with invalid payment');
+                    }
+                }
+            }
+            $objTemplate->error = true;
+            $objTemplate->message = $GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['anErrorOccured'];
+            $objTemplate->details = sprintf($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['errorDetails'],$e->getMessage());
+
+            $this->addLog('CGI ERR: error - '.$e->getMessage());
         }catch(Exception $e){
             $objTemplate->error = true;
             $objTemplate->message = $GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['anErrorOccured'];
             $objTemplate->details = sprintf($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['errorDetails'],$e->getMessage());
+
+            $this->addLog('CGI ERR: error - '.$e->getMessage());
+
         }
 
 
@@ -220,11 +257,13 @@ class Sherlock extends Postsale implements IsotopePostsale
                 $this->addLog('CGI 1: Payment KO with status - ' . $responseData['responseCode'] . ' and reason - ' . $responseData['redirectionStatusMessage']);
                 if (null === $this->order->getConfig()) {
                     throw new Exception('Config for Order ID ' . $this->order->getId() . ' not found');
-                } elseif ($this->order->checkout()) {
+                } else{
                     $this->order->updateOrderStatus($this->order->getConfig()->orderstatus_error);
-                    $this->addLog('CGI 2 : Order marked as checked out with new status: ' . $this->order->getConfig()->orderstatus_error);
-                } else {
-                    throw new Exception('Something went wrong when checking out order with invalid payment');
+                    if ($this->order->checkout()) {
+                        $this->addLog('CGI 2 : Order marked as checked out with new status: ' . $this->order->getConfig()->orderstatus_error);
+                    } else {
+                        throw new Exception('Something went wrong when checking out order with invalid payment');
+                    }
                 }
             }
 

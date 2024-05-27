@@ -30,6 +30,10 @@
         <source>Payment refused</source>
         <target>Paiement refusé</target>
       </trans-unit>
+      <trans-unit id="WEM.isotopeSherlock.paymentResult.error17">
+        <source>User aborted payment</source>
+        <target>Paiement annulé</target>
+      </trans-unit>
       <trans-unit id="WEM.isotopeSherlock.paymentResult.error34">
         <source>Payment refused</source>
         <target>Paiement refusé</target>
