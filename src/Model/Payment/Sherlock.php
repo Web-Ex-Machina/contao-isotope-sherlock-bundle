@@ -70,11 +70,9 @@ class Sherlock extends Postsale implements IsotopePostsale
 
         $this->wrapper->amount = (int) $this->amount * 100;
 
-        $this->wrapper->normalReturnUrl = System::getContainer()->get('router')->generate('sherlock_isotope_postsale', ['mod' => 'pay', 'id' => $this->id,
-            // 'redirectTo'=>$objModule->orderCompleteJumpTo
-        ], UrlGeneratorInterface::ABSOLUTE_URL);
+        $this->wrapper->normalReturnUrl = System::getContainer()->get('router')->generate('sherlock_isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
         $this->wrapper->automaticResponseUrl = System::getContainer()->get('router')->generate('isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
-        $this->wrapper->keyVersion = 1;
+
         $this->wrapper->orderId = $this->order->getUniqueId();
         $this->wrapper->customerEmail = $this->payment->billingAddress->email;
         $this->wrapper->transactionReference = $this->order->id.'TS'.time();
@@ -325,6 +323,7 @@ class Sherlock extends Postsale implements IsotopePostsale
         return new Wrapper(
             $encryptionService->decrypt($this->payment->sherlock_merchant_id ?: $this->sherlock_merchant_id),
             $encryptionService->decrypt($this->payment->sherlock_key_secret ?: $this->sherlock_key_secret),
+            $encryptionService->decrypt($this->payment->sherlock_key_version ?: $this->sherlock_key_version),
             [],
             $this->payment->sherlock_mode?: $this->sherlock_mode
         );

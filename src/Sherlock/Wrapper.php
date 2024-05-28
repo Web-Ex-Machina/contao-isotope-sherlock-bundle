@@ -9,13 +9,14 @@ class Wrapper
 	// Global
     protected $merchant_id = null;
 	protected $secret_key = null;
+    protected $key_version = null;
 	protected $mode = null;
     protected $interfaceVersion = null;
 
 	// Urls
 	protected $api = null;
-	public $api_prod = 'https://sherlocks-payment.secure.lcl.fr/';
-	public $api_dev = 'https://sherlocks-payment-webinit-simu.secure.lcl.fr/';
+    protected $api_prod = 'https://sherlocks-payment-webinit.secure.lcl.fr/';
+	protected $api_dev = 'https://sherlocks-payment-webinit-simu.secure.lcl.fr/';
 
 	// Config
 	protected $data = [];
@@ -27,16 +28,18 @@ class Wrapper
 	// paymentInit
 	// payment
 
-	public function __construct($merchant_id = '', $secret_key = '', $data = [], $mode = 'DEV')
+	public function __construct($merchant_id = '', $secret_key = '', $key_version='1', $data = [], $mode = 'DEV')
     {
+        // $mode = 'DEV';
         $this->mode = $mode;
         $this->merchant_id = 'DEV' === $this->mode ? '002016000000001' : $merchant_id;
         $this->secret_key = 'DEV' === $this->mode ? '002016000000001_KEY1' : $secret_key;
+        $this->key_version = 'DEV' === $this->mode ? '1' : $key_version;
         $this->api = 'DEV' === $this->mode ? $this->api_dev : $this->api_prod;
         $this->data = $data;
         $this->message = array();
 
-        $this->data['keyVersion'] = 1;
+        $this->data['keyVersion'] = $this->key_version;
         $this->data['merchantId'] = $this->merchant_id;
 
         // Setup mandatory vars
@@ -76,9 +79,9 @@ class Wrapper
         if(!$this->currencyCode){
             throw new Exception('"currencyCode" missing');
         }
-        // if(!$this->interfaceVersion){
-        //     throw new Exception('"interfaceVersion" missing');
-        // }
+        if(!$this->interfaceVersion){
+            throw new Exception('"interfaceVersion" missing');
+        }
         if(!$this->keyVersion){
             throw new Exception('"keyVersion" missing');
         }
@@ -176,7 +179,7 @@ class Wrapper
         	$query = http_build_query($args);
         	curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
         }
-
+        
         $result = curl_exec($ch);
 
         $this->message = array();
