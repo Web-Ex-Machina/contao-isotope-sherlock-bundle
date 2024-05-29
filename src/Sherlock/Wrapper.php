@@ -12,6 +12,9 @@ class Wrapper
     protected $key_version = null;
 	protected $mode = null;
     protected $interfaceVersion = null;
+    protected $merchant_id_dev = '002016000000001';
+    protected $secret_key_dev = '002016000000001_KEY1';
+    protected $key_version_dev = '1';
 
 	// Urls
 	protected $api = null;
@@ -32,9 +35,9 @@ class Wrapper
     {
         // $mode = 'DEV';
         $this->mode = $mode;
-        $this->merchant_id = 'DEV' === $this->mode ? '002016000000001' : $merchant_id;
-        $this->secret_key = 'DEV' === $this->mode ? '002016000000001_KEY1' : $secret_key;
-        $this->key_version = 'DEV' === $this->mode ? '1' : $key_version;
+        $this->merchant_id = 'DEV' === $this->mode ? $this->merchant_id_dev : $merchant_id;
+        $this->secret_key = 'DEV' === $this->mode ? $this->secret_key_dev : $secret_key;
+        $this->key_version = 'DEV' === $this->mode ? $this->key_version_dev : $key_version;
         $this->api = 'DEV' === $this->mode ? $this->api_dev : $this->api_prod;
         $this->data = $data;
         $this->message = array();
@@ -92,6 +95,8 @@ class Wrapper
             throw new Exception('"orderChannel" missing');
         }
 
+        ksort($this->data);
+    
         $this->api_method('paymentInit',[
                 'Data'=>$this->formatData($this->data),
                 'InterfaceVersion'=>$this->interfaceVersion,
@@ -145,6 +150,7 @@ class Wrapper
     protected function formatData(array $data){
         // return http_build_query($data,'','|');
         $str = '';
+
         foreach($data as $key => $value){
             $str.='|'.$key.'='.$value;
         }
@@ -162,7 +168,6 @@ class Wrapper
     	return hash_hmac($this->data['sealAlgorithm'] ?: 'sha256', $data, mb_convert_encoding($this->secret_key,'UTF-8'));
     }
 
-
     public function api_method($endpoint, $args, $type = 'POST')
     {
     	$url = $this->api . $endpoint;
@@ -179,7 +184,7 @@ class Wrapper
         	$query = http_build_query($args);
         	curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
         }
-        
+
         $result = curl_exec($ch);
 
         $this->message = array();

@@ -68,7 +68,7 @@ class Sherlock extends Postsale implements IsotopePostsale
 
         $this->wrapper = $this->getWrapper();
 
-        $this->wrapper->amount = (int) $this->amount * 100;
+        $this->wrapper->amount = (float) $this->amount * 100;
 
         $this->wrapper->normalReturnUrl = System::getContainer()->get('router')->generate('sherlock_isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
         $this->wrapper->automaticResponseUrl = System::getContainer()->get('router')->generate('isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
@@ -152,6 +152,8 @@ class Sherlock extends Postsale implements IsotopePostsale
                     } else {
                         throw new Exception('Something went wrong when checking out order with valid payment');
                     }
+                }else{
+                    $this->addLog('CGI 2 : Order already marked as checked out');
                 }
             }
         }catch(PaymentException $e){
@@ -167,6 +169,8 @@ class Sherlock extends Postsale implements IsotopePostsale
                         throw new Exception('Something went wrong when checking out order with invalid payment');
                     }
                 }
+            }else{
+                $this->addLog('CGI 2 : Order already marked as checked out');
             }
             $objTemplate->error = true;
             $objTemplate->message = $GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['anErrorOccured'];
@@ -244,12 +248,16 @@ class Sherlock extends Postsale implements IsotopePostsale
             if($this->isPaymentOk($responseData)){
                 $this->addLog('CGI 1: Payment OK with transaction_id - ' . $responseData['transactionReference']);
 
-                if ($this->order->checkout()) {
-                    $this->order->setDatePaid(time());
-                    $this->order->updateOrderStatus($this->new_order_status);
-                    $this->addLog('CGI 2: Order marked as checked out with new status: ' . $this->new_order_status);
-                } else {
-                    throw new Exception('Something went wrong when checking out order with valid payment');
+                if(!$this->order->isCheckoutComplete()){
+                    if ($this->order->checkout()) {
+                        $this->order->setDatePaid(time());
+                        $this->order->updateOrderStatus($this->new_order_status);
+                        $this->addLog('CGI 2: Order marked as checked out with new status: ' . $this->new_order_status);
+                    } else {
+                        throw new Exception('Something went wrong when checking out order with valid payment');
+                    }
+                }else{
+                    $this->addLog('CGI 2 : Order already marked as checked out');
                 }
             }else{
                 $this->addLog('CGI 1: Payment KO with status - ' . $responseData['responseCode'] . ' and reason - ' . $responseData['redirectionStatusMessage']);
@@ -257,10 +265,15 @@ class Sherlock extends Postsale implements IsotopePostsale
                     throw new Exception('Config for Order ID ' . $this->order->getId() . ' not found');
                 } else{
                     $this->order->updateOrderStatus($this->order->getConfig()->orderstatus_error);
-                    if ($this->order->checkout()) {
-                        $this->addLog('CGI 2 : Order marked as checked out with new status: ' . $this->order->getConfig()->orderstatus_error);
-                    } else {
-                        throw new Exception('Something went wrong when checking out order with invalid payment');
+
+                    if(!$this->order->isCheckoutComplete()){
+                        if ($this->order->checkout()) {
+                            $this->addLog('CGI 2 : Order marked as checked out with new status: ' . $this->order->getConfig()->orderstatus_error);
+                        } else {
+                            throw new Exception('Something went wrong when checking out order with invalid payment');
+                        }
+                    }else{
+                        $this->addLog('CGI 2 : Order already marked as checked out');
                     }
                 }
             }
@@ -319,6 +332,12 @@ class Sherlock extends Postsale implements IsotopePostsale
     {
         // Retrieve Encyption service
         $encryptionService = System::getContainer()->get('plenta.encryption');
+            // dump($this->sherlock_merchant_id);
+            // dump($encryptionService->decrypt($this->payment->sherlock_merchant_id ?: $this->sherlock_merchant_id));
+            // dump($this->sherlock_key_secret);
+            // dump($encryptionService->decrypt($this->payment->sherlock_key_secret ?: $this->sherlock_key_secret));
+            // dump($this->sherlock_key_version);
+            // dump($encryptionService->decrypt($this->payment->sherlock_key_version ?: $this->sherlock_key_version));
 
         return new Wrapper(
             $encryptionService->decrypt($this->payment->sherlock_merchant_id ?: $this->sherlock_merchant_id),
