@@ -75,7 +75,7 @@ class Sherlock extends Postsale implements IsotopePostsale
 
         $this->wrapper->orderId = $this->order->getUniqueId();
         $this->wrapper->customerEmail = $this->payment->billingAddress->email;
-        $this->wrapper->transactionReference = $this->order->id.'TS'.time();
+        // $this->wrapper->transactionReference = $this->order->id.'TS'.time(); // DO NOT SEND IN PROD §§
 
         $this->wrapper->paymentInit();
         
