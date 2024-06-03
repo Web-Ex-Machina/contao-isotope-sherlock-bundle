@@ -95,6 +95,10 @@ class Wrapper
             throw new Exception('"orderChannel" missing');
         }
 
+        if('DEV' === $this->mode && !in_array('transactionReference',$this->data)){
+            $this->data['transactionReference'] = 'DEV'.$this->data['orderId'].'TS'.time();
+        }
+
         ksort($this->data);
     
         $this->api_method('paymentInit',[
@@ -102,7 +106,7 @@ class Wrapper
                 'InterfaceVersion'=>$this->interfaceVersion,
                 'Seal'=>$this->getSeal($this->formatData($this->data)),
                 'Encode'=>'base64',
-                'sealAlgorithm'=>'HMAC-SHA-256'
+                'SealAlgorithm'=>'HMAC-SHA-256'
             ],'POST'
         );
     }

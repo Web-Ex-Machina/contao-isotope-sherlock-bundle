@@ -73,9 +73,8 @@ class Sherlock extends Postsale implements IsotopePostsale
         $this->wrapper->normalReturnUrl = System::getContainer()->get('router')->generate('sherlock_isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
         $this->wrapper->automaticResponseUrl = System::getContainer()->get('router')->generate('isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
 
-        $this->wrapper->orderId = $this->order->getUniqueId();
+        $this->wrapper->orderId = $this->order->getId();
         $this->wrapper->customerEmail = $this->payment->billingAddress->email;
-        // $this->wrapper->transactionReference = $this->order->id.'TS'.time(); // DO NOT SEND IN PROD §§
 
         $this->wrapper->paymentInit();
         
@@ -219,7 +218,7 @@ class Sherlock extends Postsale implements IsotopePostsale
             return null;
         }
 
-        return Order::findOneBy('uniqid',$orderId);
+        return Order::findOneBy('id',$orderId);
     }
 
     /**
