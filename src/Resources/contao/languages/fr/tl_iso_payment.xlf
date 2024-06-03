@@ -5,6 +5,47 @@
         <source>Sherlock settings</source>
         <target>Paramètres Sherlock</target>
       </trans-unit>
+
+      <trans-unit id="tl_iso_payment.sherlock_merchant_id.0">
+        <source>Sherlock Merchant ID</source>
+        <target>Identifiant boutique Sherlock</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_merchant_id.1">
+        <source>Enter your Sherlock merchant id</source>
+        <target>Indiquez votre identifiant boutique Sherlock</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_key_secret.0">
+        <source>Sherlock secret key</source>
+        <target>Clef secrète Sherlock</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_key_secret.1">
+        <source>Enter your Sherlock secret key</source>
+        <target>Indiquez votre clef secrète Sherlock</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_key_version.0">
+        <source>Sherlock secret key version</source>
+        <target>Version de clef Sherlock</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_key_version.1">
+        <source>Enter your Sherlock secret key version</source>
+        <target>Indiquez votre version de clef secrète Sherlock</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_mode.0">
+        <source>Sherlock mode</source>
+        <target>Mode Sherlock</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_mode.1">
+        <source>Chose your Sherlock mode</source>
+        <target>Choisissez le mode Sherlock</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_mode.dev">
+        <source>Development</source>
+        <target>Développement / simulation</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_mode.prod">
+        <source>Production</source>
+        <target>Production</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

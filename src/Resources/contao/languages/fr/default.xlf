@@ -1,6 +1,23 @@
 <?xml version="1.0" ?><xliff version="1.1">
   <file datatype="php" original="system/modules/isotope/languages/en/default.php" source-language="en" target-language="fr">
     <body>
+      <trans-unit id="XPL.sherlock_mode.0.0">
+        <source>Development</source>
+        <target>Développement / simulation</target>
+      </trans-unit>
+      <trans-unit id="XPL.sherlock_mode.0.1">
+        <source>Payments are made on a simulation environment. The specific Sherlock configuration is overriden to use development settings.</source>
+        <target>Les paiements sont traités sur l'environnement de simulation de Sherlock. La configuration utilisée est celle fournie par Sherlock et non celle renseignée.</target>
+      </trans-unit>
+      <trans-unit id="XPL.sherlock_mode.1.0">
+        <source>Production</source>
+        <target>Production</target>
+      </trans-unit>
+      <trans-unit id="XPL.sherlock_mode.1.1">
+        <source>Payments are made on the real environment. The Sherlock configuration used is the one configured.</source>
+        <target>Les paiements sont traités sur l'environnement réel. La configuration utilisée est celle renseignée.</target>
+      </trans-unit>
+
       <trans-unit id="WEM.isotopeSherlock.paymentResult.paymentOk">
         <source>Payment done !</source>
         <target>Paiement effectué</target>
