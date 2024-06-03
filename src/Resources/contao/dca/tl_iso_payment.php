@@ -8,7 +8,7 @@ declare(strict_types=1);
 $GLOBALS['TL_DCA']['tl_iso_payment']['palettes']['sherlock'] = '
 	{type_legend},type,name,label;
 	{note_legend:hide},note;
-	{config_sherlock_legend},sherlock_merchant_id,sherlock_key_secret,sherlock_key_version,sherlock_mode;
+	{config_sherlock_legend},sherlock_merchant_id,sherlock_key_secret,sherlock_key_version,sherlock_mode,sherlock_page_success,sherlock_page_error;
 	{config_legend},new_order_status,postsale_mail,minimum_total,maximum_total,countries,shipping_modules,product_types;
 	{price_legend:hide},price,tax_class;
 	{enabled_legend},enabled;
@@ -26,6 +26,7 @@ $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_merchant_id'] = [
         ['plenta.encryption', 'encrypt']
     ],
 ];
+
 $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_key_secret'] = [
     'exclude' => true,
     'inputType' => 'text',
@@ -38,6 +39,7 @@ $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_key_secret'] = [
         ['plenta.encryption', 'encrypt']
     ],
 ];
+
 $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_key_version'] = [
     'exclude' => true,
     'inputType' => 'text',
@@ -50,6 +52,7 @@ $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_key_version'] = [
         ['plenta.encryption', 'encrypt']
     ],
 ];
+
 $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_mode'] = [
     'exclude' => true,
     'inputType' => 'select',
@@ -60,4 +63,22 @@ $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_mode'] = [
         'DEV' => &$GLOBALS['TL_LANG']['tl_iso_payment']['sherlock_mode']['dev'],
         'PROD' => &$GLOBALS['TL_LANG']['tl_iso_payment']['sherlock_mode']['prod']
     ]
+];
+
+$GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_page_success'] = [
+    'exclude' => true,
+    'inputType' => 'picker',
+    'eval' => ['mandatory' => true, 'tl_class' => 'w50'],
+    'sql' => "varchar(255) NOT NULL default ''",
+    'foreignKey'=>'tl_page.id',
+    'relation'=>['table'=>'tl_page','field'=>'id']
+];
+
+$GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_page_error'] = [
+    'exclude' => true,
+    'inputType' => 'picker',
+    'eval' => ['mandatory' => true, 'tl_class' => 'w50'],
+    'sql' => "varchar(255) NOT NULL default ''",
+    'foreignKey'=>'tl_page.id',
+    'relation'=>['table'=>'tl_page','field'=>'id']
 ];

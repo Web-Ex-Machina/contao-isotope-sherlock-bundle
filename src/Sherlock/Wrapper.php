@@ -169,7 +169,7 @@ class Wrapper
      */
     protected function getSeal(string $data)
     {
-    	return hash_hmac($this->data['sealAlgorithm'] ?: 'sha256', $data, mb_convert_encoding($this->secret_key,'UTF-8'));
+    	return hash_hmac($this->data['SealAlgorithm'] ?: 'sha256', $data, mb_convert_encoding($this->secret_key,'UTF-8'));
     }
 
     public function api_method($endpoint, $args, $type = 'POST')

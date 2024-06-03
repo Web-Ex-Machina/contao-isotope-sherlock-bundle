@@ -78,6 +78,6 @@ Documentation : [link](https://sherlocks-documentation.secure.lcl.fr/fr/dictionn
 	'Seal'=>'XXX',
 	// optionnal fields
 	'Encode'=>'XXX',
-	'sealAlgorithm'=>'XXX',
+	'SealAlgorithm'=>'XXX',
 ]
 ```

@@ -46,6 +46,22 @@
         <source>Production</source>
         <target>Production</target>
       </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_page_success.0">
+        <source>Order OK page</source>
+        <target>Page commande validée</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_page_success.1">
+        <source>Chose the page indicating the order is OK for user</source>
+        <target>Choisissez la page indiquant à l'utilisateur que sa commande est validée</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_page_error.0">
+        <source>Order KO page</source>
+        <target>Page commande en erreur</target>
+      </trans-unit>
+      <trans-unit id="tl_iso_payment.sherlock_page_error.1">
+        <source>Chose the page indicating the order is in error for user</source>
+        <target>Choisissez la page indiquant à l'utilisateur que sa commande est en erreur</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

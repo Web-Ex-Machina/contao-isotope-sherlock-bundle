@@ -88,10 +88,14 @@ class Sherlock extends Postsale implements IsotopePostsale
     public function checkPaymentReturn(IsotopeProductCollection $objOrder)
     {
         $this->addLog('CGI 1: order ' . $objOrder->getId());
+        
+        $this->getVars($objOrder, null);
 
         $vars = $this->getPostFromRequest();
 
         $this->wrapper = $this->getWrapper();
+
+        $blnError = false;
 
         $objTemplate = new FrontendTemplate('wem_iso_sherlock_postsale_result');
         $objTemplate->message = $GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['paymentOk'];
@@ -156,6 +160,7 @@ class Sherlock extends Postsale implements IsotopePostsale
                 }
             }
         }catch(PaymentException $e){
+            $blnError = true;
             if(!$objOrder->isCheckoutComplete()){
                 $this->addLog('CGI 2: Payment KO with status - ' . $responseData['responseCode'] . ' and reason - ' . $responseData['redirectionStatusMessage']);
                 if (null === $objOrder->getConfig()) {
@@ -177,6 +182,7 @@ class Sherlock extends Postsale implements IsotopePostsale
 
             $this->addLog('CGI ERR: error - '.$e->getMessage());
         }catch(Exception $e){
+            $blnError = true;
             $objTemplate->error = true;
             $objTemplate->message = $GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['anErrorOccured'];
             $objTemplate->details = sprintf($GLOBALS['TL_LANG']['WEM']['isotopeSherlock']['paymentResult']['errorDetails'],$e->getMessage());
@@ -185,6 +191,11 @@ class Sherlock extends Postsale implements IsotopePostsale
 
         }
 
+
+        $objPageRedirect = PageModel::findOneById($blnError ? $this->payment->sherlock_page_error : $this->payment->sherlock_page_success);
+        if($objPageRedirect){
+            $objTemplate->backHref = $objPageRedirect->getAbsoluteUrl();
+        }
 
         return new Response($objTemplate->parse());
     }
