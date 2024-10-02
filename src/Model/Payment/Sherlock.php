@@ -73,7 +73,7 @@ class Sherlock extends Postsale implements IsotopePostsale
         $this->wrapper->normalReturnUrl = System::getContainer()->get('router')->generate('sherlock_isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
         $this->wrapper->automaticResponseUrl = System::getContainer()->get('router')->generate('isotope_postsale', ['mod' => 'pay', 'id' => $this->id], UrlGeneratorInterface::ABSOLUTE_URL);
 
-        $this->wrapper->orderId = $this->order->getId();
+        $this->wrapper->orderId = $this->order->getId().'_'.time();
         $this->wrapper->customerEmail = $this->payment->billingAddress->email;
 
         $this->wrapper->paymentInit();
@@ -88,7 +88,7 @@ class Sherlock extends Postsale implements IsotopePostsale
     public function checkPaymentReturn(IsotopeProductCollection $objOrder)
     {
         $this->addLog('CGI 1: order ' . $objOrder->getId());
-        
+
         $this->getVars($objOrder, null);
 
         $vars = $this->getPostFromRequest();
@@ -217,7 +217,8 @@ class Sherlock extends Postsale implements IsotopePostsale
 
         $responseData = $this->wrapper->getResponseDataAsArray($vars['Data'],$vars['Encode']);
 
-        $orderId = $responseData['orderId'];
+        // $orderId = $responseData['orderId'];
+        $orderId = explode('_',$responseData['orderId'])[0];
 
         $this->addLog(sprintf('CGI 0 : CGI callback for order %s', $orderId));
 
