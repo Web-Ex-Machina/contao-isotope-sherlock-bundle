@@ -71,7 +71,7 @@ $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_page_success'] = [
     'eval' => ['mandatory' => true, 'tl_class' => 'w50'],
     'sql' => "varchar(255) NOT NULL default ''",
     'foreignKey'=>'tl_page.id',
-    'relation'=>['table'=>'tl_page','field'=>'id']
+    'relation'=>['table'=>'tl_page','field'=>'id', 'type' => 'eager']
 ];
 
 $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_page_error'] = [
@@ -80,5 +80,5 @@ $GLOBALS['TL_DCA']['tl_iso_payment']['fields']['sherlock_page_error'] = [
     'eval' => ['mandatory' => true, 'tl_class' => 'w50'],
     'sql' => "varchar(255) NOT NULL default ''",
     'foreignKey'=>'tl_page.id',
-    'relation'=>['table'=>'tl_page','field'=>'id']
+    'relation'=>['table'=>'tl_page','field'=>'id', 'type' => 'eager']
 ];
